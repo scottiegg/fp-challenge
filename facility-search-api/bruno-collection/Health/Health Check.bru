@@ -1,0 +1,17 @@
+meta {
+  name: Health Check
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/health
+  body: none
+  auth: none
+}
+
+docs {
+  Check if the API is running and healthy.
+  
+  Returns status, uptime, and facilities loaded count.
+}

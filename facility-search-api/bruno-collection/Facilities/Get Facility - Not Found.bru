@@ -1,0 +1,19 @@
+meta {
+  name: Get Facility - Not Found
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/facilities/invalid-id
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  Test 404 Not Found scenario with an invalid facility ID.
+}

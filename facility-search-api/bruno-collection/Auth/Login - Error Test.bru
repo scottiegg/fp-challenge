@@ -1,0 +1,23 @@
+meta {
+  name: Login - Error Test
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "user@example.com",
+    "password": "error"
+  }
+}
+
+docs {
+  Test login failure scenario.
+  Using password "error" simulates a failed login.
+}

@@ -1,0 +1,21 @@
+meta {
+  name: Get Facility Details
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/facilities/facility-001
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  Retrieve complete information about a specific facility.
+  
+  Replace 'facility-001' with the desired facility ID.
+}

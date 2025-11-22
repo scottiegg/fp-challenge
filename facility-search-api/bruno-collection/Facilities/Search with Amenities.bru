@@ -1,0 +1,26 @@
+meta {
+  name: Search with Amenities
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/facilities/search?q=Fitness&amenities=Pool,Sauna
+  body: none
+  auth: bearer
+}
+
+params:query {
+  q: Fitness
+  amenities: Pool,Sauna
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  Search facilities with amenity filters.
+  
+  Amenities should be comma-separated values.
+}

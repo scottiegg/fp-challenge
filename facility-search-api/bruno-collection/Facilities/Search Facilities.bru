@@ -1,0 +1,29 @@
+meta {
+  name: Search Facilities
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/facilities/search?q=City
+  body: none
+  auth: bearer
+}
+
+params:query {
+  q: City
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  Search for facilities by name with partial matching support.
+  
+  Features:
+  - Case-insensitive matching
+  - Partial name matching
+  - Multi-word query support
+  - Results sorted by relevance
+}

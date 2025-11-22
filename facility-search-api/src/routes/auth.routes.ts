@@ -6,8 +6,8 @@ const router = Router();
 
 // Validation schema for login
 const loginSchema = z.object({
-  email: z.string().email('Invalid email format'),
-  password: z.string().min(1, 'Password is required'),
+  email: z.string().email({ error: 'Invalid email format' }),
+  password: z.string().min(1, { error: 'Password is required' }),
 });
 
 /**
@@ -22,7 +22,7 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
     if (!validation.success) {
       res.status(400).json({
         error: 'Invalid request body',
-        details: validation.error.errors,
+        details: validation.error.issues,
       });
       return;
     }

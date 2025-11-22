@@ -126,10 +126,12 @@ function randomDelay(min: number, max: number): Promise<void> {
  * Expects token to be stored in localStorage with key 'auth_token'
  */
 export function getCurrentUser(): User | null {
+  // @ts-expect-error localStorage is not defined in Node.js
   if (typeof localStorage === 'undefined') {
     return null;
   }
 
+  // @ts-expect-error localStorage is not defined in Node.js
   const token = localStorage.getItem('auth_token');
   if (!token) return null;
 

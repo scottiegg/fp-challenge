@@ -7,12 +7,12 @@ const router = Router();
 
 // Validation schemas
 const searchQuerySchema = z.object({
-  q: z.string().min(1, 'Query parameter "q" is required').max(100),
+  q: z.string().min(1, { error: 'Query parameter "q" is required' }).max(100),
   amenities: z.string().optional(),
 });
 
 const facilityIdSchema = z.object({
-  id: z.string().min(1, 'Facility ID is required'),
+  id: z.string().min(1, { error: 'Facility ID is required' }),
 });
 
 /**
@@ -30,7 +30,7 @@ router.get('/search', authMiddleware, (req: Request, res: Response): void => {
     if (!validation.success) {
       res.status(400).json({
         error: 'Invalid query parameters',
-        details: validation.error.errors,
+        details: validation.error.issues,
       });
       return;
     }
@@ -76,7 +76,7 @@ router.get('/:id', authMiddleware, (req: Request, res: Response): void => {
     if (!validation.success) {
       res.status(400).json({
         error: 'Invalid facility ID',
-        details: validation.error.errors,
+        details: validation.error.issues,
       });
       return;
     }

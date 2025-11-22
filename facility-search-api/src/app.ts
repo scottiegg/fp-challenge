@@ -46,21 +46,6 @@ export function createApp(): Application {
   app.use('/api/auth', authRoutes);
   app.use('/api/facilities', facilityRoutes);
 
-  // Root endpoint
-  app.get('/', (req, res) => {
-    res.json({
-      message: 'Facility Search API',
-      version: '1.0.0',
-      endpoints: {
-        health: 'GET /api/health',
-        login: 'POST /api/auth/login',
-        search: 'GET /api/facilities/search?q=<query>',
-        facility: 'GET /api/facilities/:id',
-      },
-      documentation: 'See README.md for full API documentation',
-    });
-  });
-
   // Error handling
   app.use(notFoundHandler);
   app.use(errorHandler);

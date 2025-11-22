@@ -12,16 +12,6 @@ describe('Facility Search API', () => {
     authToken = token;
   });
 
-  describe('GET /', () => {
-    it('should return API information', async () => {
-      const response = await request(app).get('/');
-      
-      expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty('message');
-      expect(response.body).toHaveProperty('endpoints');
-    });
-  });
-
   describe('GET /api/health', () => {
     it('should return health status', async () => {
       const response = await request(app).get('/api/health');

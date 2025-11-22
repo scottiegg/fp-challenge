@@ -9,11 +9,13 @@ export class FacilityService {
   private facilities: Facility[];
   private facilityIndex: Map<string, Facility>;
   private nameIndex: Map<string, Set<string>>; // Lowercase name tokens -> facility IDs
+  private amenityIndex: Map<string, Set<string>>; // Lowercase amenity -> facility IDs
 
   constructor() {
     this.facilities = facilitiesData as Facility[];
     this.facilityIndex = new Map();
     this.nameIndex = new Map();
+    this.amenityIndex = new Map();
     this.buildIndexes();
   }
 
@@ -34,31 +36,26 @@ export class FacilityService {
         }
         this.nameIndex.get(token)!.add(facility.id);
       }
+
+      // Index by amenities for fast filtering
+      for (const amenity of facility.facilities) {
+        const normalizedAmenity = amenity.toLowerCase();
+        if (!this.amenityIndex.has(normalizedAmenity)) {
+          this.amenityIndex.set(normalizedAmenity, new Set());
+        }
+        this.amenityIndex.get(normalizedAmenity)!.add(facility.id);
+      }
     }
   }
 
   /**
    * Tokenize facility name into searchable tokens
-   * Supports partial matching by creating prefixes
+   * Uses word-level tokenization for efficient indexing
    */
   private tokenizeName(name: string): string[] {
     const normalized = name.toLowerCase();
-    const words = normalized.split(/\s+/);
-    const tokens: string[] = [];
-
-    // Add full words and prefixes for partial matching
-    for (const word of words) {
-      // Add full word
-      tokens.push(word);
-      
-      // Add prefixes (min 2 chars) for partial matching
-      // e.g., "City" -> ["ci", "cit", "city"]
-      for (let i = 2; i <= word.length; i++) {
-        tokens.push(word.substring(0, i));
-      }
-    }
-
-    return tokens;
+    const words = normalized.split(/\s+/).filter(w => w.length > 0);
+    return words;
   }
 
   /**
@@ -73,15 +70,23 @@ export class FacilityService {
     }
 
     const normalizedQuery = query.toLowerCase().trim();
-    const queryTokens = normalizedQuery.split(/\s+/);
+    const queryTokens = normalizedQuery.split(/\s+/).filter(t => t.length > 0);
     
-    // Find facilities that match any query token
+    // Find facilities that match any query token using prefix matching
     const matchingIds = new Set<string>();
     
-    for (const token of queryTokens) {
-      // Check if any indexed token starts with the query token
+    for (const queryToken of queryTokens) {
+      // Direct lookup for exact word matches
+      const exactMatch = this.nameIndex.get(queryToken);
+      if (exactMatch) {
+        exactMatch.forEach(id => matchingIds.add(id));
+      }
+      
+      // For partial matching, check indexed tokens that start with query
+      // This is more efficient than the previous approach but still O(n) for prefixes
+      // Consider using a trie for true O(k) prefix matching in production
       for (const [indexedToken, facilityIds] of this.nameIndex.entries()) {
-        if (indexedToken.startsWith(token)) {
+        if (indexedToken !== queryToken && indexedToken.startsWith(queryToken)) {
           facilityIds.forEach(id => matchingIds.add(id));
         }
       }
@@ -128,11 +133,15 @@ export class FacilityService {
    * @returns Facility object or null if not found
    */
   getById(id: string): Facility | null {
+    if (!id) {
+      return null;
+    }
     return this.facilityIndex.get(id) || null;
   }
 
   /**
-   * Filter facilities by amenities
+   * Filter facilities by amenities using indexed lookups
+   * Time complexity: O(k + m) where k is amenity count and m is matching facilities
    * @param amenities - Array of amenity names to filter by
    * @returns Array of facilities that have ALL specified amenities
    */
@@ -143,18 +152,50 @@ export class FacilityService {
 
     const normalizedAmenities = amenities.map(a => a.toLowerCase());
     
-    const results = this.facilities.filter(facility => {
-      const facilityAmenities = facility.facilities.map(f => f.toLowerCase());
-      return normalizedAmenities.every(amenity => 
-        facilityAmenities.includes(amenity)
-      );
-    });
+    // Start with facilities that have the first amenity
+    const firstAmenity = normalizedAmenities[0];
+    const candidateIds = this.amenityIndex.get(firstAmenity);
+    
+    if (!candidateIds || candidateIds.size === 0) {
+      return [];
+    }
+    
+    // Filter to facilities that have ALL amenities (intersection)
+    const matchingIds = new Set(candidateIds);
+    
+    for (let i = 1; i < normalizedAmenities.length; i++) {
+      const amenityIds = this.amenityIndex.get(normalizedAmenities[i]);
+      
+      if (!amenityIds || amenityIds.size === 0) {
+        return []; // No facilities have this amenity
+      }
+      
+      // Keep only IDs that exist in both sets
+      for (const id of matchingIds) {
+        if (!amenityIds.has(id)) {
+          matchingIds.delete(id);
+        }
+      }
+      
+      if (matchingIds.size === 0) {
+        return []; // No facilities have all amenities
+      }
+    }
 
-    return results.map(facility => ({
-      id: facility.id,
-      name: facility.name,
-      address: facility.address,
-    }));
+    // Convert IDs to facility results
+    const results: FacilitySearchResult[] = [];
+    for (const id of matchingIds) {
+      const facility = this.facilityIndex.get(id);
+      if (facility) {
+        results.push({
+          id: facility.id,
+          name: facility.name,
+          address: facility.address,
+        });
+      }
+    }
+
+    return results;
   }
 
   /**
